@@ -1,0 +1,366 @@
+[
+  {
+    "frame_id": 202,
+    "timestamp": "2025-06-17 23:37:02",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 205,
+    "timestamp": "2025-06-17 23:37:05",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 208,
+    "timestamp": "2025-06-17 23:37:07",
+    "detected": [
+      "person",
+      "pizza",
+      "hand",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 211,
+    "timestamp": "2025-06-17 23:37:10",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 214,
+    "timestamp": "2025-06-17 23:37:13",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 217,
+    "timestamp": "2025-06-17 23:37:15",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 220,
+    "timestamp": "2025-06-17 23:37:18",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 223,
+    "timestamp": "2025-06-17 23:37:21",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 226,
+    "timestamp": "2025-06-17 23:37:24",
+    "detected": [
+      "person",
+      "pizza",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 229,
+    "timestamp": "2025-06-17 23:37:26",
+    "detected": [
+      "person",
+      "pizza",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 232,
+    "timestamp": "2025-06-17 23:37:29",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 235,
+    "timestamp": "2025-06-17 23:37:32",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 238,
+    "timestamp": "2025-06-17 23:37:35",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 241,
+    "timestamp": "2025-06-17 23:37:38",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 244,
+    "timestamp": "2025-06-17 23:37:41",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 247,
+    "timestamp": "2025-06-17 23:37:43",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 250,
+    "timestamp": "2025-06-17 23:37:46",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 253,
+    "timestamp": "2025-06-17 23:37:48",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 256,
+    "timestamp": "2025-06-17 23:37:51",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 259,
+    "timestamp": "2025-06-17 23:37:55",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 262,
+    "timestamp": "2025-06-17 23:37:58",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 265,
+    "timestamp": "2025-06-17 23:38:01",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 268,
+    "timestamp": "2025-06-17 23:38:04",
+    "detected": [
+      "person",
+      "pizza",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 127,
+    "timestamp": "2025-06-18 00:10:35",
+    "roi": "chicken",
+    "detected": [
+      "person",
+      "pizza",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 158,
+    "timestamp": "2025-06-18 00:11:04",
+    "roi": "chicken",
+    "detected": [
+      "person",
+      "pizza",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 189,
+    "timestamp": "2025-06-18 00:11:33",
+    "roi": "chicken",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 220,
+    "timestamp": "2025-06-18 00:12:02",
+    "roi": "chicken",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 572,
+    "timestamp": "2025-06-18 01:11:19",
+    "roi": "olive",
+    "detected": [
+      "person",
+      "pizza",
+      "hand",
+      "hand",
+      "person",
+      "scooper"
+    ]
+  },
+  {
+    "frame_id": 603,
+    "timestamp": "2025-06-18 01:11:51",
+    "roi": "olive",
+    "detected": [
+      "person",
+      "pizza",
+      "hand",
+      "hand",
+      "person",
+      "scooper"
+    ]
+  },
+  {
+    "frame_id": 634,
+    "timestamp": "2025-06-18 01:12:20",
+    "roi": "olive",
+    "detected": [
+      "person",
+      "pizza",
+      "hand",
+      "hand",
+      "person",
+      "scooper"
+    ]
+  },
+  {
+    "frame_id": 385,
+    "timestamp": "2025-06-18 04:58:40",
+    "roi": "onion",
+    "detected": [
+      "pizza",
+      "person",
+      "hand",
+      "hand"
+    ]
+  },
+  {
+    "frame_id": 572,
+    "timestamp": "2025-06-18 05:01:21",
+    "roi": "olive",
+    "detected": [
+      "person",
+      "pizza",
+      "hand",
+      "hand",
+      "person",
+      "scooper"
+    ]
+  },
+  {
+    "frame_id": 603,
+    "timestamp": "2025-06-18 05:01:47",
+    "roi": "olive",
+    "detected": [
+      "person",
+      "pizza",
+      "hand",
+      "hand",
+      "person",
+      "scooper"
+    ]
+  },
+  {
+    "frame_id": 634,
+    "timestamp": "2025-06-18 05:02:14",
+    "roi": "olive",
+    "detected": [
+      "person",
+      "pizza",
+      "hand",
+      "hand",
+      "person",
+      "scooper"
+    ]
+  }
+]

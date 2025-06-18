@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>🍕 Pizza Hygiene Monitoring</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #fffaf0, #f0f0f0);
+      padding: 30px;
+      color: #333;
+      text-align: center;
+    }
+    h1 {
+      color: #d33;
+      margin-bottom: 20px;
+    }
+    #video-feed {
+      border: 4px solid #d33;
+      border-radius: 10px;
+      width: 720px;
+      max-width: 100%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .status {
+      font-size: 20px;
+      margin: 20px 0;
+    }
+    .info {
+      background: white;
+      display: inline-block;
+      padding: 10px 20px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      font-size: 18px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    table {
+      margin: 20px auto;
+      width: 90%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+    }
+    th {
+      background-color: #f44336;
+      color: white;
+    }
+    .button-container {
+      margin-top: 20px;
+    }
+    button {
+      margin: 10px;
+      padding: 12px 20px;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background-color: #d32f2f;
+    }
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      color: #777;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🍕 Real-time Pizza Hygiene Monitor</h1>
+
+  <img id="video-feed" src="/video" alt="Live Feed">
+
+  <div class="status" id="status">Loading status...</div>
+  <div class="info" id="metadata">Loading metadata...</div>
+
+  <h2 style="margin-top:30px;">⚠️ Detected Violations</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Timestamp</th>
+        <th>ROI</th>
+      </tr>
+    </thead>
+    <tbody id="violation-table-body"></tbody>
+  </table>
+
+  <div class="button-container">
+    <a href="/download" download>
+      <button>⬇️ Download Video</button>
+    </a>
+    <a href="/report" download>
+      <button>⬇️ Download Report (JSON)</button>
+    </a>
+    <a href="/plot" target="_blank">
+      <button>📊 Show Violation Chart</button>
+    </a>
+  </div>
+
+  <footer>
+    Developed by EagleVision Team | Powered by Computer Vision 🧠
+  </footer>
+
+  <script>
+    let lastViolationCount = 0;
+
+    async function updateMetadata() {
+      try {
+        const metaRes = await fetch("/metadata");
+        const metaData = await metaRes.json();
+        document.getElementById("metadata").innerText =
+          `Violations: ${metaData.violations} | Frames Received: ${metaData.frames_received}`;
+        lastViolationCount = metaData.violations;
+      } catch {
+        document.getElementById("metadata").innerText = "❌ Failed to load metadata.";
+      }
+    }
+
+    async function updateViolationsTable() {
+      try {
+        const response = await fetch("/violations");
+        const data = await response.json();
+        const tableBody = document.getElementById("violation-table-body");
+        const statusDiv = document.getElementById("status");
+
+        tableBody.innerHTML = "";
+        if (data.violations.length === 0) {
+          statusDiv.innerText = "✅ Safe - No violations detected.";
+        } else {
+          statusDiv.innerText = `🚨 Violations Detected: ${data.violations.length}`;
+          data.violations.forEach(v => {
+            const row = `<tr><td>${v.timestamp}</td><td>${v.roi}</td></tr>`;
+            tableBody.innerHTML += row;
+          });
+        }
+      } catch {
+        document.getElementById("status").innerText = "❌ Failed to load violations.";
+      }
+    }
+
+    setInterval(() => {
+      updateMetadata();
+      updateViolationsTable();
+    }, 3000);
+
+    updateMetadata();
+    updateViolationsTable();
+  </script>
+</body>
+</html>

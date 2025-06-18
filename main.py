@@ -1,169 +1,169 @@
 import base64
 import json
 import pika
+import threading
 import cv2
 import numpy as np
-from ultralytics import YOLO
+from flask import Flask, Response, jsonify, render_template, send_file
 import os
+import io
 import time
-import sqlite3
+import matplotlib.pyplot as plt
+from datetime import datetime
+import atexit
+#تهيئة تطبيق flask
+app = Flask(__name__)
+frames_buffer = []
+violation_count = 0
+violations_log = []
 
-# تحميل النموذج
-model = YOLO("yolo12m-v2.pt")
+# إعداد الفيديو
+video_output_path = "c:/Pizza_Store/shared/output1.mp4"
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+video_writer = cv2.VideoWriter(video_output_path, fourcc, 25.0, (640, 480))
+# تعرض صفحة html
+@app.route('/')
+def index():
+    return render_template('index.html')
+#بث الفيديو
+@app.route('/video')
+def video_feed():
+    def generate():
+        last_frame = None
+        while True:
+            if frames_buffer:
+                last_frame = frames_buffer[-1]
+            if last_frame is not None:
+                _, jpeg = cv2.imencode('.jpg', last_frame)
+                frame = jpeg.tobytes()
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            time.sleep(1 / 30.0)
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
+#API: ارجاع عدد الانتهاكات والفريمات
+@app.route('/metadata')
+def metadata():
+    return jsonify({
+        "violations": violation_count,
+        "frames_received": len(frames_buffer)
+    })
+# عرض سجل الانتهاكات
+@app.route('/violations')
+def get_violations():
+    return jsonify({"violations": violations_log})
+# رسم مخطط للانتهاكات
+@app.route('/plot')
+def plot():
+    try:
+        times = [datetime.strptime(entry['timestamp'], "%Y-%m-%d %H:%M:%S") for entry in violations_log]
+        if not times:
+            return "<h3>No violations to display</h3>"
 
-# تحميل ROIs
-roi_path = os.path.join(os.path.dirname(__file__), "roi.json")
-with open(roi_path, "r") as f:
-    roi_data = json.load(f)
-ROI_BOXES = {name: tuple(coords) for name, coords in roi_data.items()}
+        times.sort()
+        plt.figure(figsize=(8, 4))
+        plt.hist(times, bins=10, color='red', edgecolor='black')
+        plt.title("Violations Over Time")
+        plt.xlabel("Time")
+        plt.ylabel("Count")
+        plt.tight_layout()
 
-# إنشاء قاعدة البيانات
-conn = sqlite3.connect("violations.db", check_same_thread=False)
-c = conn.cursor()
-c.execute('''
-    CREATE TABLE IF NOT EXISTS violations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        frame_id INTEGER,
-        timestamp TEXT,
-        roi TEXT,
-        labels TEXT,
-        bbox TEXT
-    )
-''')
-conn.commit()
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        return Response(buf.getvalue(), mimetype='image/png')
 
-# متغيرات منطق الانتهاك الحقيقي
-violation_active = False
-violation_start_frame = None
-VIOLATION_DURATION_FRAMES = 30
+    except Exception as e:
+        return f"<h3>Error generating plot: {str(e)}</h3>"
+# تنزيل الفيديو المحفوظ
+@app.route('/download')
+def download():
+    return send_file(video_output_path, as_attachment=True)
+# تنزيل تقرير الانتهاكات
+@app.route('/report')
+def report():
+    path = "violations_log.json"
+    with open(path, "w") as f:
+        json.dump(violations_log, f, indent=2)
+    return send_file(path, as_attachment=True)
+# رسم الكائنات و roi علي الفريم 
+def draw_detections(frame, detections, rois, violation, count):
+    # رسم كل الـ ROIs
+    for name, box in rois.items():
+        x1, y1, x2, y2 = box
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
+        cv2.putText(frame, name, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 200, 200), 2)
 
-# دالة التأكد من وجود مركز الكائن داخل ROI معين
-def is_inside_roi(bbox, roi_box):
-    x1, y1, x2, y2 = bbox
-    cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
-    rx1, ry1, rx2, ry2 = roi_box
-    return rx1 <= cx <= rx2 and ry1 <= cy <= ry2
+    # رسم الكائنات
+    for d in detections:
+        x1, y1, x2, y2 = d['bbox']
+        label = f"{d['name']} | {d['score']*100:.1f}%"
+        color = (0, 0, 255) if violation else (0, 255, 0)
+        cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+        cv2.putText(frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-# فك تشفير الفريم
-def decode_frame(encoded_frame):
-    decoded = base64.b64decode(encoded_frame)
+    # عرض عدد الانتهاكات
+    cv2.putText(frame, f"Violations: {count}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+
+    # عرض الحالة
+    status_text = "🚨 Violation!" if violation else "✅ Safe"
+    status_color = (0, 0, 255) if violation else (0, 255, 0)
+    cv2.putText(frame, status_text, (10, 65), cv2.FONT_HERSHEY_SIMPLEX, 0.9, status_color, 2)
+
+    return frame
+# فك ترميز الفريم المرسل
+def decode_frame(encoded):
+    decoded = base64.b64decode(encoded)
     np_data = np.frombuffer(decoded, dtype=np.uint8)
     return cv2.imdecode(np_data, cv2.IMREAD_COLOR)
+# استقبال rabbitmq للرسائل واستماعها
+def start_listening():
+    global violation_count
+    try:
+        roi_path = os.path.join(os.path.dirname(__file__), "roi.json")
+        with open(roi_path, "r") as f:
+            rois = json.load(f)
+#الاتصال ب rabbitmq
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        channel = connection.channel()
+        channel.queue_declare(queue='processed_frames')
+# الدالة التي تتعامل مع كل فريم مستلم
+        def callback(ch, method, properties, body):
+            global violation_count
+            try:
+                data = json.loads(body)
+                frame = decode_frame(data['frame'])
+                detections = data['detections']
+                violation = data.get('violation', False)
+                ts = data.get("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                roi_name = data.get("roi", "unknown")
 
-# التحقق من وجود انتهاك في الفريم الحالي
-def is_violation(detections):
-    for roi_name, roi_box in ROI_BOXES.items():
-        hand_inside = any(det['name'] == 'hand' and is_inside_roi(det['bbox'], roi_box) for det in detections)
-        scooper_inside = any(det['name'] == 'scooper' and is_inside_roi(det['bbox'], roi_box) for det in detections)
+                if violation:
+                    violation_count += 1
+                    violations_log.append({"timestamp": ts, "roi": roi_name})
 
-        if hand_inside and not scooper_inside:
-            return True, roi_name
-    return False, None
+                drawn = draw_detections(frame, detections, rois, violation, violation_count)
+                frames_buffer.append(drawn)
+                video_writer.write(drawn)
 
-# المعالجة
-def process_frame(ch, method, properties, body):
-    global violation_active, violation_start_frame
+            except Exception as e:
+                print(f"Callback error: {e}")
+# ربط الاستماع مع callback
+        channel.basic_consume(queue='processed_frames', on_message_callback=callback, auto_ack=True)
+        print("📺 Streaming service is running and receiving frames...")
+        channel.start_consuming()
 
-    data = json.loads(body)
-    frame_id = data.get("frame_id", 0)
-    frame = decode_frame(data['frame'])
-    results = model(frame, verbose=False)[0]
-
-    detections = []
-    for box in results.boxes.data.tolist():
-        x1, y1, x2, y2, score, class_id = box
-        name = results.names[int(class_id)]
-        detections.append({
-            'name': name,
-            'bbox': [int(x1), int(y1), int(x2), int(y2)],
-            'score': float(score)
-        })
-
-    print(f"\n📦 Frame #{frame_id} processed.")
-    violation_now, roi_name = is_violation(detections)
-
-    confirmed_violation = False
-    ts = None
-
-    if violation_now:
-        if not violation_active:
-            violation_active = True
-            violation_start_frame = frame_id
-            print("⚠️ Violation started...")
-        elif frame_id - violation_start_frame >= VIOLATION_DURATION_FRAMES:
-            confirmed_violation = True
-            violation_active = False
-            ts = time.strftime('%Y-%m-%d %H:%M:%S')
-
-            # حفظ قاعدة البيانات
-            c.execute('''
-                INSERT INTO violations (frame_id, timestamp, roi, labels, bbox)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (
-                frame_id,
-                ts,
-                roi_name,
-                json.dumps([d['name'] for d in detections]),
-                json.dumps([d['bbox'] for d in detections])
-            ))
-            conn.commit()
-
-            # تسجيل JSON
-            log_path = os.path.join(os.path.dirname(__file__), "violations_log.json")
-            log_entry = {
-                "frame_id": frame_id,
-                "timestamp": ts,
-                "roi": roi_name,
-                "detected": [d['name'] for d in detections]
-            }
-            if not os.path.exists(log_path):
-                with open(log_path, "w") as f:
-                    json.dump([], f)
-
-            with open(log_path, "r+") as f:
-                try:
-                    logs = json.load(f)
-                except json.JSONDecodeError:
-                    logs = []
-                logs.append(log_entry)
-                f.seek(0)
-                f.truncate()
-                json.dump(logs, f, indent=2)
-
-            print(f"🚨 Confirmed violation in ROI: {roi_name}")
-    else:
-        violation_active = False
-        violation_start_frame = None
-        print("✅ Safe - No violation detected.")
-
-    # إرسال النتيجة
-    result = {
-        "frame_id": frame_id,
-        "frame": data['frame'],
-        "detections": detections,
-        "violation": confirmed_violation
-    }
-
-    channel.basic_publish(
-        exchange='',
-        routing_key='processed_frames',
-        body=json.dumps(result)
-    )
-
-# RabbitMQ setup
-try:
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
-    channel = connection.channel()
-    channel.queue_declare(queue='frames')
-    channel.queue_declare(queue='processed_frames')
-    channel.basic_consume(queue='frames', on_message_callback=process_frame, auto_ack=True)
-
-    print("🚀 Detection service running...")
-    channel.start_consuming()
-
-except KeyboardInterrupt:
-    print("🛑 Detection stopped by user.")
-
-finally:
-    conn.close()
-    print("🗃️ SQLite connection closed.")
+    except Exception as e:
+        print(f"❌ Error in start_listening: {e}")
+# بدء التطبيق
+if __name__ == '__main__':
+    t = threading.Thread(target=start_listening)
+    t.daemon = True
+    t.start()
+    app.run(host='0.0.0.0', port=5000)
+#لاغلاق الفيديو بشكل صحيح
+@atexit.register
+def release_video_writer():
+    global video_writer
+    if video_writer.isOpened():
+        print("💾 Closing video file properly...")
+        video_writer.release()
